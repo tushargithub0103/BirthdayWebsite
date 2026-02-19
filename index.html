@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAKSHI — A Film</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IM+Fell+English:ital@0;1&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --black: #050507;
+  --near-black: #0c0c10;
+  --white: #f0ede8;
+  --off-white: #d4cfc8;
+  --gold: #c8a84b;
+  --gold-dim: #8a7232;
+  --red: #8b1a1a;
+  --red-bright: #c0392b;
+  --grain: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--black);
+  color: var(--white);
+  font-family: 'Courier Prime', monospace;
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* grain overlay */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: var(--grain);
+  pointer-events: none;
+  z-index: 9000;
+  opacity: 0.35;
+  mix-blend-mode: overlay;
+}
+
+/* Film scratches */
+.scratch {
+  position: fixed;
+  top: 0; bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.06) 20%, transparent 40%, rgba(255,255,255,0.04) 70%, transparent 100%);
+  pointer-events: none;
+  z-index: 8999;
+  animation: scratchAnim linear infinite;
+  opacity: 0;
+}
+.scratch:nth-child(1) { left: 18%; animation-duration: 7s; animation-delay: 0s; }
+.scratch:nth-child(2) { left: 72%; animation-duration: 11s; animation-delay: 3s; }
+.scratch:nth-child(3) { left: 45%; animation-duration: 9s; animation-delay: 5s; }
+
+@keyframes scratchAnim {
+  0%,85%,100% { opacity: 0; }
+  87%,97% { opacity: 1; }
+}
+
+/* Vignette */
+.vignette {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.85) 100%);
+  pointer-events: none;
+  z-index: 8998;
+}
+
+/* Cursor */
+#cur {
+  position: fixed;
+  width: 6px; height: 6px;
+  background: var(--gold);
+  border-radius: 50%;
+  transform: translate(-50%,-50%);
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: difference;
+  transition: transform 0.05s;
+}
+#cur-ring {
+  position: fixed;
+  width: 28px; height: 28px;
+  border: 1px solid rgba(200,168,75,0.4);
+  border-radius: 50%;
+  transform: translate(-50%,-50%);
+  pointer-events: none;
+  z-index: 9998;
+  transition: width 0.2s, height 0.2s, border-color 0.2s;
+}
+body:has(button:hover) #cur-ring, body:has(.chapter-card:hover) #cur-ring {
+  width: 50px; height: 50px;
+  border-color: rgba(200,168,75,0.8);
+}
+
+/* ═══════════════════════════════════
+   LOADING SCREEN
+═══════════════════════════════════ */
+#loader {
+  position: fixed;
+  inset: 0;
+  background: var(--black);
+  z-index: 9990;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  transition: opacity 0.8s ease, visibility 0.8s ease;
+}
+#loader.gone { opacity: 0; visibility: hidden; }
+
+.loader-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 4rem;
+  letter-spacing: 0.4em;
+  color: var(--white);
+  animation: flicker 0.1s ease infinite;
+}
+
+@keyframes flicker {
+  0%,100% { opacity: 1; }
+  92% { opacity: 1; }
+  93% { opacity: 0.4; }
+  94% { opacity: 1; }
+  98% { opacity: 1; }
+  99% { opacity: 0.3; }
+}
+
+.loader-bar-wrap {
+  width: 220px;
+  height: 1px;
+  background: rgba(255,255,255,0.1);
+}
+.loader-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--gold);
+  transition: width 2.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.loader-text {
+  font-size: 0.65rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  animation: blink 1s step-end infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* ═══════════════════════════════════
+   INTRO — "THE FILM OPENS"
+═══════════════════════════════════ */
+#intro {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 60px 24px;
+}
+
+.intro-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 40%, #1a0a0a 0%, var(--black) 70%);
+}
+
+.studio-tag {
+  font-size: 0.6rem;
+  letter-spacing: 0.5em;
+  text-transform: uppercase;
+  color: rgba(200,168,75,0.5);
+  margin-bottom: 48px;
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  animation: fadeIn 1s ease 0.5s forwards;
+}
+
+.film-title-wrap {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  opacity: 0;
+  animation: fadeIn 1.4s ease 0.9s forwards;
+}
+
+.film-eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.6em;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  margin-bottom: 12px;
+}
+
+.film-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(5rem, 20vw, 14rem);
+  letter-spacing: 0.08em;
+  line-height: 0.9;
+  color: var(--white);
+  text-shadow: 0 0 80px rgba(200,168,75,0.08);
+}
+
+.film-dash {
+  display: block;
+  font-family: 'IM Fell English', serif;
+  font-style: italic;
+  font-size: clamp(1.2rem, 4vw, 2.2rem);
+  font-weight: 400;
+  color: rgba(200,160,60,0.7);
+  letter-spacing: 0.2em;
+  margin-top: 8px;
+}
+
+.film-tagline {
+  position: relative;
+  z-index: 1;
+  margin-top: 40px;
+  font-size: 0.78rem;
+  letter-spacing: 0.25em;
+  color: rgba(255,255,255,0.3);
+  text-transform: uppercase;
+  opacity: 0;
+  animation: fadeIn 1s ease 1.6s forwards;
+}
+
+.film-meta {
+  position: relative;
+  z-index: 1;
+  margin-top: 80px;
+  display: flex;
+  gap: 48px;
+  opacity: 0;
+  animation: fadeIn 1s ease 2s forwards;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.meta-block {
+  text-align: center;
+}
+.meta-label {
+  font-size: 0.55rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.2);
+  margin-bottom: 4px;
+}
+.meta-val {
+  font-family: 'IM Fell English', serif;
+  font-size: 1rem;
+  color: var(--off-white);
+}
+
+.begin-btn {
+  position: relative;
+  z-index: 1;
+  margin-top: 64px;
+  padding: 14px 56px;
+  background: transparent;
+  border: 1px solid rgba(200,168,75,0.4);
+  color: var(--gold);
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.5em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  opacity: 0;
+  animation: fadeIn 1s ease 2.4s forwards;
+  position: relative;
+  overflow: hidden;
+}
+.begin-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gold);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  z-index: -1;
+}
+.begin-btn:hover {
+  color: var(--black);
+  border-color: var(--gold);
+}
+.begin-btn:hover::before { transform: translateX(0); }
+
+/* ═══════════════════════════════════
+   CHAPTERS SCREEN
+═══════════════════════════════════ */
+#chapters-screen {
+  display: none;
+  min-height: 100vh;
+  padding: 80px 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.chapters-header {
+  text-align: center;
+  margin-bottom: 64px;
+}
+
+.ch-eyebrow {
+  font-size: 0.6rem;
+  letter-spacing: 0.5em;
+  color: var(--gold-dim);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.ch-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2rem, 6vw, 4rem);
+  letter-spacing: 0.1em;
+  color: var(--white);
+}
+
+.chapters-grid {
+  max-width: 900px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 2px;
+}
+
+.chapter-card {
+  position: relative;
+  padding: 40px 28px;
+  background: var(--near-black);
+  border: 1px solid rgba(255,255,255,0.04);
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.3s;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.chapter-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.chapter-card:nth-child(1)::before { background: radial-gradient(ellipse at 30% 70%, rgba(139,26,26,0.4), transparent 70%); }
+.chapter-card:nth-child(2)::before { background: radial-gradient(ellipse at 70% 30%, rgba(200,168,75,0.2), transparent 70%); }
+.chapter-card:nth-child(3)::before { background: radial-gradient(ellipse at 40% 60%, rgba(30,60,120,0.4), transparent 70%); }
+.chapter-card:nth-child(4)::before { background: radial-gradient(ellipse at 60% 40%, rgba(20,100,60,0.3), transparent 70%); }
+
+.chapter-card:hover { border-color: rgba(200,168,75,0.2); }
+.chapter-card:hover::before { opacity: 1; }
+
+.chapter-card.locked { opacity: 0.35; cursor: not-allowed; }
+.chapter-card.locked:hover::before { opacity: 0; }
+.chapter-card.locked:hover { border-color: rgba(255,255,255,0.04); }
+
+.card-num {
+  font-size: 5rem;
+  font-family: 'Bebas Neue', sans-serif;
+  color: rgba(255,255,255,0.04);
+  position: absolute;
+  top: 12px;
+  right: 20px;
+  line-height: 1;
+  transition: color 0.4s;
+}
+.chapter-card:hover .card-num { color: rgba(200,168,75,0.08); }
+
+.card-label {
+  font-size: 0.55rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  margin-bottom: 8px;
+}
+
+.card-title {
+  font-family: 'IM Fell English', serif;
+  font-size: 1.5rem;
+  font-style: italic;
+  color: var(--white);
+  line-height: 1.2;
+  margin-bottom: 12px;
+}
+
+.card-desc {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.3);
+  line-height: 1.6;
+  font-style: italic;
+}
+
+.card-lock {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  font-size: 0.9rem;
+  opacity: 0.3;
+}
+
+.card-arrow {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  font-size: 1rem;
+  color: var(--gold-dim);
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: opacity 0.3s, transform 0.3s;
+}
+.chapter-card:not(.locked):hover .card-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ═══════════════════════════════════
+   CHAPTER VIEWER (FULL SCREEN)
+═══════════════════════════════════ */
+#viewer {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: var(--black);
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+.viewer-close {
+  position: fixed;
+  top: 24px;
+  left: 32px;
+  z-index: 600;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.35);
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: color 0.3s;
+  padding: 8px 0;
+}
+.viewer-close:hover { color: var(--gold); }
+.viewer-close::before { content: '←'; font-size: 1rem; }
+
+.viewer-progress {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: rgba(255,255,255,0.06);
+  z-index: 600;
+}
+.viewer-progress-bar {
+  height: 100%;
+  background: var(--gold);
+  width: 0%;
+  transition: width 0.1s linear;
+}
+
+/* ── CHAPTER 1: THE OPENING ── */
+#ch1 { display: none; }
+
+.film-strip {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 32px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(to bottom, #0a0204, #120408);
+}
+
+.strip-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 30% 50%, rgba(100,10,10,0.5) 0%, transparent 60%);
+}
+
+.ch1-year {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(6rem, 25vw, 18rem);
+  line-height: 0.85;
+  color: rgba(255,255,255,0.03);
+  position: absolute;
+  bottom: -20px;
+  right: -20px;
+  pointer-events: none;
+  letter-spacing: -0.02em;
+  user-select: none;
+}
+
+.ch1-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.6em;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  margin-bottom: 40px;
+  position: relative;
+  z-index: 1;
+  animation: fadeIn 1s ease 0.2s both;
+}
+
+.ch1-quote {
+  font-family: 'IM Fell English', serif;
+  font-size: clamp(1.8rem, 5vw, 3.5rem);
+  font-style: italic;
+  color: var(--white);
+  line-height: 1.35;
+  text-align: center;
+  max-width: 700px;
+  position: relative;
+  z-index: 1;
+  animation: fadeIn 1.2s ease 0.5s both;
+}
+
+.ch1-quote em {
+  color: var(--gold);
+  font-style: normal;
+}
+
+.ch1-body {
+  margin-top: 48px;
+  max-width: 520px;
+  text-align: center;
+  font-size: 0.88rem;
+  line-height: 2;
+  color: rgba(255,255,255,0.45);
+  position: relative;
+  z-index: 1;
+  animation: fadeIn 1s ease 0.9s both;
+}
+
+/* Scene divider */
+.scene-cut {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(200,168,75,0.2), transparent);
+  margin: 0;
+}
+
+/* ── CHAPTER 2: THE LETTER ── */
+#ch2 { display: none; }
+
+.letter-scene {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 120px 32px;
+  position: relative;
+  background: linear-gradient(to bottom, #080810, #060608);
+}
+
+.typewriter-wrap {
+  max-width: 600px;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+.letter-header {
+  font-size: 0.6rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: rgba(200,168,75,0.4);
+  margin-bottom: 48px;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding-bottom: 16px;
+}
+
+.letter-text {
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.95rem;
+  line-height: 2.2;
+  color: rgba(240,237,232,0.75);
+}
+
+.letter-text p { margin-bottom: 28px; }
+
+.letter-text .emphasis {
+  color: var(--white);
+  font-style: italic;
+}
+
+.letter-text .gold-line {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.letter-sign {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  font-family: 'IM Fell English', serif;
+  font-style: italic;
+  font-size: 1.2rem;
+  color: var(--gold);
+  opacity: 0.8;
+}
+
+/* Typewriter cursor */
+.tw-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: var(--gold);
+  margin-left: 2px;
+  vertical-align: middle;
+  animation: blink 0.8s step-end infinite;
+}
+
+/* ── CHAPTER 3: THE FUTURE ── */
+#ch3 { display: none; }
+
+.future-scene {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120px 32px;
+  position: relative;
+  overflow: hidden;
+  background: #04060e;
+}
+
+.future-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 80%, rgba(10,20,60,0.8) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(20,60,40,0.4) 0%, transparent 50%);
+}
+
+/* Constellation dots */
+.star-dot {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--white);
+  animation: twinkle ease infinite;
+}
+
+@keyframes twinkle {
+  0%,100% { opacity: 0.2; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.4); }
+}
+
+.future-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2.5rem, 8vw, 6rem);
+  letter-spacing: 0.15em;
+  color: var(--white);
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  margin-bottom: 16px;
+  animation: fadeIn 1s ease 0.3s both;
+}
+
+.future-sub {
+  font-size: 0.72rem;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: rgba(200,168,75,0.5);
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  margin-bottom: 72px;
+  animation: fadeIn 1s ease 0.5s both;
+}
+
+.wishes-list {
+  max-width: 700px;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.wish-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 28px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+  cursor: default;
+}
+.wish-row.vis { opacity: 1; transform: translateX(0); }
+
+.wish-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.5rem;
+  color: rgba(200,168,75,0.12);
+  line-height: 1;
+  min-width: 50px;
+  transition: color 0.3s;
+}
+.wish-row:hover .wish-num { color: rgba(200,168,75,0.5); }
+
+.wish-content { flex: 1; }
+.wish-heading {
+  font-family: 'IM Fell English', serif;
+  font-size: 1.25rem;
+  font-style: italic;
+  color: var(--white);
+  margin-bottom: 6px;
+}
+.wish-body {
+  font-size: 0.8rem;
+  line-height: 1.75;
+  color: rgba(255,255,255,0.35);
+}
+
+/* ── CHAPTER 4: THE CREDITS ── */
+#ch4 { display: none; }
+
+.credits-scene {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 120px 32px 80px;
+  position: relative;
+  overflow: hidden;
+  background: var(--black);
+}
+
+.credits-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 30%, rgba(80,10,10,0.4) 0%, transparent 60%);
+}
+
+.credits-roll {
+  max-width: 500px;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.credits-film-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(3rem, 10vw, 7rem);
+  letter-spacing: 0.1em;
+  color: var(--white);
+  line-height: 0.9;
+  margin-bottom: 8px;
+  animation: fadeIn 1s ease 0.2s both;
+}
+
+.credits-film-sub {
+  font-family: 'IM Fell English', serif;
+  font-style: italic;
+  font-size: 1.1rem;
+  color: var(--gold-dim);
+  margin-bottom: 64px;
+  animation: fadeIn 1s ease 0.5s both;
+}
+
+.credit-block {
+  margin-bottom: 40px;
+  animation: fadeIn 1s ease both;
+}
+
+.credit-role {
+  font-size: 0.55rem;
+  letter-spacing: 0.5em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.2);
+  margin-bottom: 4px;
+}
+
+.credit-name {
+  font-family: 'IM Fell English', serif;
+  font-size: 1.4rem;
+  font-style: italic;
+  color: var(--off-white);
+}
+
+.credit-name.gold { color: var(--gold); font-size: 1.8rem; }
+
+.credits-divider {
+  width: 40px;
+  height: 1px;
+  background: rgba(200,168,75,0.2);
+  margin: 32px auto;
+}
+
+.final-dedication {
+  margin-top: 48px;
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.8rem;
+  line-height: 2;
+  color: rgba(255,255,255,0.25);
+  font-style: italic;
+  animation: fadeIn 1.5s ease 1.5s both;
+}
+
+.final-dedication strong {
+  color: var(--gold);
+  font-style: normal;
+}
+
+.restart-btn {
+  margin-top: 64px;
+  padding: 12px 40px;
+  background: transparent;
+  border: 1px solid rgba(200,168,75,0.25);
+  color: rgba(200,168,75,0.5);
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s;
+  animation: fadeIn 1s ease 2.5s both;
+}
+.restart-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* Transition overlay */
+#trans {
+  position: fixed;
+  inset: 0;
+  background: var(--black);
+  z-index: 800;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+#trans.show { opacity: 1; pointer-events: all; }
+
+/* Unlock flash */
+.unlock-flash {
+  position: fixed;
+  inset: 0;
+  background: var(--gold);
+  z-index: 700;
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  animation: flashAnim 0.4s ease forwards;
+}
+@keyframes flashAnim {
+  0% { opacity: 0; }
+  20% { opacity: 0.15; }
+  100% { opacity: 0; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════
+   MISC UTILS
+═══════════════════════════════════ */
+.next-chapter-btn {
+  margin-top: 64px;
+  padding: 14px 48px;
+  background: transparent;
+  border: 1px solid rgba(200,168,75,0.3);
+  color: var(--gold);
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: color 0.3s;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+.next-chapter-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(200,168,75,0.1);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+}
+.next-chapter-btn:hover::before { transform: translateX(0); }
+
+@media (max-width: 600px) {
+  .letter-header { flex-direction: column; gap: 4px; }
+  .film-title { font-size: clamp(4rem, 22vw, 10rem); }
+}
+</style>
+</head>
+<body>
+
+<!-- Cursors -->
+<div id="cur"></div>
+<div id="cur-ring"></div>
+
+<!-- Film scratches + vignette -->
+<div class="scratch"></div>
+<div class="scratch"></div>
+<div class="scratch"></div>
+<div class="vignette"></div>
+
+<!-- Transition overlay -->
+<div id="trans"></div>
+
+<!-- ═══════════ LOADER ═══════════ -->
+<div id="loader">
+  <div class="loader-logo">SAKSHI</div>
+  <div class="loader-bar-wrap"><div class="loader-bar" id="loaderBar"></div></div>
+  <div class="loader-text">Loading the film...</div>
+</div>
+
+<!-- ═══════════ INTRO ═══════════ -->
+<div id="intro">
+  <div class="intro-bg"></div>
+  <div class="studio-tag">A personal production · Est. always</div>
+  <div class="film-title-wrap">
+    <div class="film-eyebrow">A film about</div>
+    <div class="film-title">SAKSHI<em class="film-dash">— A Life Worth Watching</em></div>
+    <div class="film-tagline">Directed by someone who sees her clearly</div>
+  </div>
+  <div class="film-meta">
+    <div class="meta-block">
+      <div class="meta-label">Genre</div>
+      <div class="meta-val">Coming-of-age · Love · Wonder</div>
+    </div>
+    <div class="meta-block">
+      <div class="meta-label">Running time</div>
+      <div class="meta-val">A lifetime</div>
+    </div>
+    <div class="meta-block">
+      <div class="meta-label">Rating</div>
+      <div class="meta-val">Unmissable</div>
+    </div>
+  </div>
+  <button class="begin-btn" onclick="beginFilm()">▶ Enter the film</button>
+</div>
+
+<!-- ═══════════ CHAPTERS SCREEN ═══════════ -->
+<div id="chapters-screen">
+  <div class="chapters-header">
+    <div class="ch-eyebrow">Select a chapter</div>
+    <div class="ch-title">SAKSHI — A FILM</div>
+  </div>
+  <div class="chapters-grid">
+
+    <div class="chapter-card" id="card1" onclick="openChapter(1)">
+      <div class="card-num">I</div>
+      <div class="card-label">Chapter One</div>
+      <div class="card-title">The Opening Scene</div>
+      <div class="card-desc">Every great film begins with a single frame. This one begins with you.</div>
+      <div class="card-arrow">→</div>
+    </div>
+
+    <div class="chapter-card locked" id="card2" onclick="openChapter(2)">
+      <div class="card-lock">🔒</div>
+      <div class="card-num">II</div>
+      <div class="card-label">Chapter Two</div>
+      <div class="card-title">The Letter</div>
+      <div class="card-desc">Words that couldn't be said out loud. Unlocks after Chapter I.</div>
+    </div>
+
+    <div class="chapter-card locked" id="card3" onclick="openChapter(3)">
+      <div class="card-lock">🔒</div>
+      <div class="card-num">III</div>
+      <div class="card-label">Chapter Three</div>
+      <div class="card-title">What Awaits You</div>
+      <div class="card-desc">The future — written in light. Unlocks after Chapter II.</div>
+    </div>
+
+    <div class="chapter-card locked" id="card4" onclick="openChapter(4)">
+      <div class="card-lock">🔒</div>
+      <div class="card-num">IV</div>
+      <div class="card-label">Chapter Four</div>
+      <div class="card-title">The Credits Roll</div>
+      <div class="card-desc">Every film ends. But not every story does. Unlocks after Chapter III.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════ VIEWER ═══════════ -->
+<div id="viewer">
+  <div class="viewer-progress"><div class="viewer-progress-bar" id="vpbar"></div></div>
+  <button class="viewer-close" onclick="closeViewer()">Back to chapters</button>
+
+  <!-- CHAPTER 1 -->
+  <div id="ch1">
+    <div class="film-strip">
+      <div class="strip-bg"></div>
+      <div class="ch1-year">∞</div>
+      <div class="ch1-label">Chapter I — The Opening Scene</div>
+      <div class="ch1-quote">
+        "Some people don't just arrive in the world —<br>
+        <em>they rearrange it.</em>"
+      </div>
+      <div class="ch1-body">
+        You were born and the universe quietly shifted its weight. Not with trumpets or grand announcements — just a soft, certain knowing that something luminous had arrived. This is the story of that arrival. Of a girl who became a force. Who laughed so easily it made strangers feel like they'd known her forever. Who carried warmth like it was the most natural thing in the world — because for her, it was.
+        <br><br>
+        This is your film, Sakshi. Every frame of it belongs to you.
+      </div>
+      <button class="next-chapter-btn" onclick="completeAndNext(1)">Continue → Chapter II</button>
+    </div>
+  </div>
+
+  <!-- CHAPTER 2 -->
+  <div id="ch2">
+    <div class="letter-scene">
+      <div class="typewriter-wrap">
+        <div class="letter-header">
+          <span>Personal correspondence</span>
+          <span id="letterDate"></span>
+        </div>
+        <div class="letter-text" id="letterText"></div>
+        <div class="letter-sign" id="letterSign" style="display:none">— Someone who sees you<span class="tw-cursor"></span></div>
+        <button class="next-chapter-btn" id="nextFromLetter" style="display:none;margin-top:48px" onclick="completeAndNext(2)">Continue → Chapter III</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAPTER 3 -->
+  <div id="ch3">
+    <div class="future-scene">
+      <div class="future-bg"></div>
+      <!-- stars added by JS -->
+      <div class="future-title">YOUR FUTURE</div>
+      <div class="future-sub">Wishes written in starlight</div>
+      <div class="wishes-list" id="wishesList">
+        <div class="wish-row">
+          <div class="wish-num">01</div>
+          <div class="wish-content">
+            <div class="wish-heading">That you chase the terrifying thing</div>
+            <div class="wish-body">The dream that lives in the back of your mind — the one you haven't said out loud yet. I hope this is the year you say it out loud. And then go do it.</div>
+          </div>
+        </div>
+        <div class="wish-row">
+          <div class="wish-num">02</div>
+          <div class="wish-content">
+            <div class="wish-heading">That people love you the way you love them</div>
+            <div class="wish-body">You give so freely. You show up when it's inconvenient. You remember the little things. I hope the world reflects that back to you, in full.</div>
+          </div>
+        </div>
+        <div class="wish-row">
+          <div class="wish-num">03</div>
+          <div class="wish-content">
+            <div class="wish-heading">That you trust yourself more than you already do</div>
+            <div class="wish-body">Your instincts are good. Your heart is right most of the time. The version of you who acts on that — she's unstoppable.</div>
+          </div>
+        </div>
+        <div class="wish-row">
+          <div class="wish-num">04</div>
+          <div class="wish-content">
+            <div class="wish-heading">That you get the trip, the meal, the midnight laugh</div>
+            <div class="wish-body">All the small, perfect moments. The ones you almost didn't do. I hope you do every single one of them this year.</div>
+          </div>
+        </div>
+        <div class="wish-row">
+          <div class="wish-num">05</div>
+          <div class="wish-content">
+            <div class="wish-heading">That you remember — you are the good thing</div>
+            <div class="wish-body">You've been the reason other people's days got better for as long as I've known you. You deserve to feel that about yourself. Today. Tomorrow. Always.</div>
+          </div>
+        </div>
+      </div>
+      <button class="next-chapter-btn" style="margin-top:64px" onclick="completeAndNext(3)">Final Chapter → The Credits</button>
+    </div>
+  </div>
+
+  <!-- CHAPTER 4 -->
+  <div id="ch4">
+    <div class="credits-scene">
+      <div class="credits-bg"></div>
+      <div class="credits-roll">
+        <div class="credits-film-title">SAKSHI</div>
+        <div class="credits-film-sub">A Life Worth Watching</div>
+
+        <div class="credit-block" style="animation-delay:0.6s">
+          <div class="credit-role">Starring</div>
+          <div class="credit-name gold">Sakshi</div>
+        </div>
+
+        <div class="credits-divider"></div>
+
+        <div class="credit-block" style="animation-delay:0.9s">
+          <div class="credit-role">Written by</div>
+          <div class="credit-name">The sum of every moment you've lived</div>
+        </div>
+        <div class="credit-block" style="animation-delay:1.1s">
+          <div class="credit-role">Directed by</div>
+          <div class="credit-name">Your own extraordinary courage</div>
+        </div>
+        <div class="credit-block" style="animation-delay:1.3s">
+          <div class="credit-role">Produced with</div>
+          <div class="credit-name">Laughter, warmth, and a smile that ruins people</div>
+        </div>
+        <div class="credit-block" style="animation-delay:1.5s">
+          <div class="credit-role">Soundtrack</div>
+          <div class="credit-name">Every song that ever made you feel something</div>
+        </div>
+        <div class="credit-block" style="animation-delay:1.7s">
+          <div class="credit-role">Dedicated to</div>
+          <div class="credit-name gold" style="font-size:1.4rem">The birthday girl.<br>Then. Now. Always.</div>
+        </div>
+
+        <div class="credits-divider"></div>
+
+        <div class="final-dedication">
+          Happy Birthday, <strong>Sakshi</strong>.<br>
+          This film has no ending.<br>
+          Because you are still in the middle of<br>
+          the most beautiful story.<br><br>
+          <strong>Keep going. We're all watching.</strong><br>
+          <strong>We're all rooting for you.</strong>
+        </div>
+
+        <button class="restart-btn" onclick="restartFilm()">↺ Watch again from the beginning</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end #viewer -->
+
+<script>
+// ── Cursor ──
+const cur = document.getElementById('cur');
+const ring = document.getElementById('cur-ring');
+let mx=window.innerWidth/2, my=window.innerHeight/2, rx=mx, ry=my;
+document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; cur.style.left=mx+'px'; cur.style.top=my+'px'; });
+(function anim(){ rx+=(mx-rx)*.1; ry+=(my-ry)*.1; ring.style.left=rx+'px'; ring.style.top=ry+'px'; requestAnimationFrame(anim); })();
+
+// ── Loader ──
+window.addEventListener('load', () => {
+  const bar = document.getElementById('loaderBar');
+  setTimeout(()=>{ bar.style.width='100%'; }, 80);
+  setTimeout(()=>{ document.getElementById('loader').classList.add('gone'); }, 2600);
+});
+
+// ── State ──
+let unlockedChapters = [1];
+
+// ── Begin film ──
+function beginFilm() {
+  const t = document.getElementById('trans');
+  t.classList.add('show');
+  setTimeout(()=>{
+    document.getElementById('intro').style.display='none';
+    document.getElementById('chapters-screen').style.display='block';
+    t.classList.remove('show');
+  }, 400);
+}
+
+// ── Open chapter ──
+function openChapter(n) {
+  if (!unlockedChapters.includes(n)) return;
+  const t = document.getElementById('trans');
+  t.classList.add('show');
+  setTimeout(()=>{
+    document.getElementById('chapters-screen').style.display='none';
+    const viewer = document.getElementById('viewer');
+    viewer.style.display='block';
+    viewer.scrollTop = 0;
+    // hide all chapters
+    ['ch1','ch2','ch3','ch4'].forEach(id => document.getElementById(id).style.display='none');
+    document.getElementById('ch'+n).style.display='block';
+
+    if (n===2) startTypewriter();
+    if (n===3) animateWishes();
+    if (n===3) addStars();
+
+    t.classList.remove('show');
+
+    // scroll progress
+    viewer.addEventListener('scroll', updateProgress);
+  }, 400);
+}
+
+function updateProgress() {
+  const v = document.getElementById('viewer');
+  const pct = (v.scrollTop / (v.scrollHeight - v.clientHeight)) * 100;
+  document.getElementById('vpbar').style.width = pct+'%';
+}
+
+// ── Close viewer ──
+function closeViewer() {
+  const t = document.getElementById('trans');
+  t.classList.add('show');
+  setTimeout(()=>{
+    document.getElementById('viewer').style.display='none';
+    document.getElementById('chapters-screen').style.display='block';
+    t.classList.remove('show');
+  }, 400);
+}
+
+// ── Complete chapter and unlock next ──
+function completeAndNext(n) {
+  // flash
+  const flash = document.createElement('div');
+  flash.className='unlock-flash';
+  document.body.appendChild(flash);
+  setTimeout(()=>flash.remove(),500);
+
+  if (!unlockedChapters.includes(n+1)) unlockedChapters.push(n+1);
+
+  // update card UI
+  const card = document.getElementById('card'+(n+1));
+  if (card) {
+    card.classList.remove('locked');
+    const lock = card.querySelector('.card-lock');
+    if (lock) lock.remove();
+    const arrow = document.createElement('div');
+    arrow.className='card-arrow';
+    arrow.textContent='→';
+    card.appendChild(arrow);
+  }
+
+  const t = document.getElementById('trans');
+  t.classList.add('show');
+  setTimeout(()=>{
+    document.getElementById('viewer').style.display='none';
+    document.getElementById('chapters-screen').style.display='block';
+    t.classList.remove('show');
+  }, 400);
+}
+
+// ── Restart ──
+function restartFilm() {
+  const t = document.getElementById('trans');
+  t.classList.add('show');
+  setTimeout(()=>{
+    document.getElementById('viewer').style.display='none';
+    document.getElementById('chapters-screen').style.display='none';
+    document.getElementById('intro').style.display='flex';
+    t.classList.remove('show');
+  }, 400);
+}
+
+// ── Typewriter for letter ──
+const letterContent = [
+  { type:'p', text:'Sakshi,' },
+  { type:'p', text:"There are people you meet who change the quality of the air in a room — who make it easier to breathe, easier to be honest, easier to feel like yourself. You are one of those people. You've always been one of those people." },
+  { type:'p', cls:'emphasis', text:"I want you to know something, and I want you to really hear it:" },
+  { type:'p', cls:'gold-line', text:"The way you exist in the world is a gift." },
+  { type:'p', text:"Not because you're perfect. Not because you always have the right answer. But because you show up — fully, warmly, completely. You remember what people care about. You notice when something's off. You laugh loud enough to pull people out of their own heads. You care without making it a performance." },
+  { type:'p', text:"You taught me things I didn't know I needed to learn. What it looks like to be genuinely present with someone. What real generosity feels like — not the reluctant kind, but the kind that comes easy because it comes from the heart." },
+  { type:'p', cls:'emphasis', text:"On your birthday, I hope you feel — even for just one afternoon — how loved you are. Not because of what you do. But because of who you simply, beautifully are." },
+  { type:'p', text:"Happy Birthday. This one's for you." },
+];
+
+function startTypewriter() {
+  const now = new Date();
+  document.getElementById('letterDate').textContent = now.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const container = document.getElementById('letterText');
+  container.innerHTML = '';
+  let pIdx = 0, cIdx = 0;
+  const sign = document.getElementById('letterSign');
+  const nextBtn = document.getElementById('nextFromLetter');
+  sign.style.display='none'; nextBtn.style.display='none';
+
+  function typeNext() {
+    if (pIdx >= letterContent.length) {
+      sign.style.display='block';
+      setTimeout(()=>{ nextBtn.style.display='block'; }, 600);
+      return;
+    }
+    const item = letterContent[pIdx];
+    let el = container.querySelector(`[data-idx="${pIdx}"]`);
+    if (!el) {
+      el = document.createElement('p');
+      el.setAttribute('data-idx', pIdx);
+      if (item.cls) el.className = item.cls;
+      container.appendChild(el);
+    }
+    if (cIdx < item.text.length) {
+      el.textContent = item.text.slice(0, cIdx+1);
+      cIdx++;
+      setTimeout(typeNext, 18);
+    } else {
+      pIdx++; cIdx=0;
+      setTimeout(typeNext, 220);
+    }
+  }
+  setTimeout(typeNext, 400);
+}
+
+// ── Wish rows animate in ──
+function animateWishes() {
+  const rows = document.querySelectorAll('.wish-row');
+  rows.forEach((r,i) => {
+    setTimeout(()=> r.classList.add('vis'), 300 + i*160);
+  });
+}
+
+// ── Stars for chapter 3 ──
+function addStars() {
+  const scene = document.querySelector('.future-scene');
+  if (scene.querySelector('.star-dot')) return;
+  for(let i=0;i<80;i++){
+    const s=document.createElement('div');
+    s.className='star-dot';
+    const sz=Math.random()*2+0.5;
+    s.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;animation-duration:${2+Math.random()*4}s;animation-delay:${Math.random()*3}s;`;
+    scene.appendChild(s);
+  }
+}
+</script>
+</body>
+</html>
